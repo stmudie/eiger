@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Eiger Control</title>
+
+    <link rel="stylesheet" href="../static/styles/main.css">
+    <script src="../static/bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="../static/bower_components/polymer/polymer.html">
+    <link rel="import" href="../static/elements/elements.html">
+
+</head>
+
+
+<body unresolved class="fullbleed layout vertical">
+<template is="dom-bind" id="app">
+    <eiger-control id="eiger" connected="{{"{{connected}}"}}" detector_update="{{"{{detector_update}}"}}" filewriter_update="{{"{{filewriter_update}}"}}" on-filewriter="handleFilewriter" on-detector="handleDetector"></eiger-control>
+</template>
+</body>
+
+<script>
+    (function (document) {
+        'use strict';
+
+        // Grab a reference to our auto-binding template
+        // and give it some initial binding values
+        // Learn more about auto-binding templates at http://goo.gl/Dx1u2g
+        var app = document.querySelector('#app');
+//        var eiger = document.querySelector('#eiger');
+
+        app.connected = false;
+        app.detector_update = '';
+        app.filewriter_update = '';
+
+        app.handleFilewriter = function(event) {
+            sendText(JSON.stringify({type: 'filewriter', data:event.detail}));
+        };
+        app.handleDetector = function(event) {
+            sendText(JSON.stringify({type: 'detector', data:event.detail}));
+        };
+
+        window.addEventListener('WebComponentsReady', function () {
+            document.querySelector('body').removeAttribute('unresolved');
+        });
+
+        app.addEventListener('dom-change', function() {
+            console.log('Our app is ready to rock!');
+        });
+
+        // Socket Stuff
+        var socket = null;
+        var isopen = false;
+        window.onload = function () {
+            connect();
+
+            socket.onmessage = function (e) {
+
+                if (typeof e.data == "string") {
+                    console.log("Text message received: ");
+                    var message = JSON.parse(e.data);
+
+                    switch (message.type) {
+                        case 'update_detector':
+                             app.detector_update = JSON.stringify(message.data);
+                            break;
+                        case 'update_filewriter':
+                            app.filewriter_update = JSON.stringify(message.data);
+                            break;
+                    }
+
+                } else {
+                    var arr = new Uint8Array(e.data);
+                    var hex = '';
+                    for (var i = 0; i < arr.length; i++) {
+                        hex += ('00' + arr[i].toString(16)).substr(-2);
+                    }
+                    console.log("Binary message received: " + hex);
+                }
+            };
+            socket.onclose = function (e) {
+                console.log("Connection closed.");
+                socket = null;
+                isopen = false;
+                app.connected = false;
+                setTimeout(connect, 5000);
+            }
+        };
+
+        function connect() {
+            console.log("Trying to connect");
+            socket = new WebSocket("ws://127.0.0.1:9000");
+            socket.binaryType = "arraybuffer";
+            socket.onopen = function () {
+                console.log("Connected!");
+                isopen = true;
+                app.connected = true;
+                sendText(JSON.stringify({type: 'update_all'}));
+            };
+            socket.onerror = function (evt) {
+                if (!isopen) {
+                    setTimeout(connect, 5000);
+                }
+            };
+        }
+
+        function sendText(message) {
+            if (isopen) {
+                socket.send(message);
+                console.log("Text message sent.");
+            } else {
+                console.log("Connection not opened.")
+            }
+        }
+
+        function sendBinary() {
+            if (isopen) {
+                var buf = new ArrayBuffer(32);
+                var arr = new Uint8Array(buf);
+                for (var i = 0; i < arr.length; ++i) arr[i] = i;
+                socket.send(buf);
+                console.log("Binary message sent.");
+            } else {
+                console.log("Connection not opened.")
+            }
+        }
+
+    })(document);
+</script>
+
+</html>

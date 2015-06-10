@@ -1,0 +1,20 @@
+{
+  "name": "eigercontrol",
+  "version": "0.0.0",
+  "authors": [
+    "Stephen Mudie <stephen.mudie@synchrotron.org.au>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~1.0.2",
+    "iron-elements": "polymerelements/iron-elements#~1.0.0",
+    "paper-elements": "polymerelements/paper-elements#~1.0.1"
+  }
+}

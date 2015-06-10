@@ -1,0 +1,292 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<!--<link rel="import" href="../../bower_components/paper-styles/paper-styles.html">-->
+
+<dom-module id="eiger-control">
+    <link rel="import" type="css" href="eiger-control.css">
+
+    <style>
+     :host {
+         display: block;
+     }
+    paper-input /deep/ paper-input-container[disabled] {
+        opacity: 1;
+    }
+
+    .disconnected {
+        background-color: var(--accent-color);
+    }
+    </style>
+
+    <template>
+        <paper-drawer-panel id="paperDrawerPanel" forceNarrow>
+            <div drawer>
+
+                <!-- Drawer Toolbar -->
+                <paper-toolbar id="drawerToolbar">
+                    <span>Menu</span>
+                </paper-toolbar>
+                <!-- Drawer Content -->
+                <paper-menu class="list" attr-for-selected="data-route" selected="{{selectedPage}}"
+                            on-iron-select="onMenuSelect">
+                    <paper-item data-route="home">
+                        <iron-icon icon="home"></iron-icon>
+                        <span>Home</span>
+                    </paper-item>
+                    <paper-item data-route="detector">
+                        <iron-icon icon="settings"></iron-icon>
+                        <span>Detector</span>
+                    </paper-item>
+                    <paper-item data-route="filewriter">
+                        <iron-icon icon="create"></iron-icon>
+                        <span>Filewriter</span>
+                    </paper-item>
+                    <paper-item data-route="data">
+                        <iron-icon icon="folder"></iron-icon>
+                        <span>Data</span>
+                    </paper-item>
+                </paper-menu>
+
+            </div>
+            <paper-header-panel main mode="waterfall">
+                <!-- Main Toolbar -->
+                <paper-toolbar id="mainToolbar">
+                    <button tabindex="1" id="paperToggle" paper-drawer-toggle>
+                        <iron-icon icon="menu" paper-drawer-toggle></iron-icon>
+                    </button>
+
+                    <!-- Application name -->
+                    <div class="appname paper-font-display2">Eiger Control</div>
+
+                    <span class="flex"></span>
+
+                    <!-- Toolbar icons -->
+                    <paper-icon-button icon="refresh"></paper-icon-button>
+                    <paper-icon-button icon="search"></paper-icon-button>
+                    <div class="middle"></div>
+
+
+
+                </paper-toolbar>
+                <!-- Main Content -->
+                <iron-pages attr-for-selected="data-route" selected="{{selectedPage}}">
+
+                    <section data-route="home">
+                        <paper-material elevation="1">
+                            home
+                        </paper-material>
+                    </section>
+                    <section data-route="detector">
+                        <paper-material elevation="1">
+                            detector
+                        </paper-material>
+                    </section>
+                    <section data-route="filewriter">
+                        <paper-material elevation="1" class="horizontal">
+                            <paper-material elevation="2" class="vertical" style="width: 610px;">
+                                <H1>Detector</H1>
+                                <div class = "horizontal">
+                                    <div class = "vertical" style="width: 200px;">
+                                        <paper-input label="Count Time" alwaysFloatLabel type="number" value="{{detector.count_time}}"></paper-input>
+                                        <paper-input label="Frame Time" alwaysFloatLabel type="number" value="{{detector.frame_time}}"></paper-input>
+                                        <paper-input label="Number of Images" alwaysFloatLabel type="number" value="{{detector.nimages}}"></paper-input>
+                                        <paper-input label="Photon Energy" alwaysFloatLabel type="number" value="{{detector.photon_energy}}"></paper-input>
+                                        <paper-input label="Wavelength" alwaysFloatLabel type="number" value="{{detector.wavelength}}"></paper-input>
+                                    </div>
+                                    <div class = "vertical" style="width: 200px;">
+                                        <paper-input label="Element" alwaysFloatLabel type="string" value="{{detector.element}}"></paper-input>
+                                        <paper-input label="Threshold Energy" alwaysFloatLabel type="number" value="{{detector.threshold_energy}}"></paper-input>
+                                        <paper-checkbox checked="{{detector.flatfield_correction_applied}}">Flatfield Correction</paper-checkbox>
+                                        <paper-input label="Number of Excluded Pixels" alwaysFloatLabel type="number" value="{{detector.number_of_excluded_pixels}}"></paper-input>
+                                        <paper-checkbox checked="{{detector.countrate_correction_applied}}">Countrate Correction</paper-checkbox>
+                                    </div>
+                                    <div class = "vertical" style="width: 200px;">
+                                        <paper-item>Trigger</paper-item>
+                                        <paper-radio-group selected="{{detector.trigger_mode}}">
+                                            <paper-radio-button name="ints">Internal</paper-radio-button>
+                                            <paper-radio-button name="exts">External Trigger</paper-radio-button>
+                                            <paper-radio-button name="exte">External Enable</paper-radio-button>
+                                        </paper-radio-group>
+                                    </div>
+                                </div>
+                            </paper-material>
+                            <paper-material elevation="2" class="vertical" style="width: 200px;">
+                                <H1>FileWriter</H1>
+                                <paper-checkbox checked="{{filewriter.mode}}">Enabled</paper-checkbox>
+                                <paper-checkbox checked="{{filewriter.compression_enabled}}">Compression</paper-checkbox>
+                                <paper-input label="Name Pattern" alwaysFloatLabel value="{{filewriter.name_pattern}}"></paper-input>
+                                <paper-input label="# Images per file" type="number" alwaysFloatLabel value="{{filewriter.nimages_per_file}}"></paper-input>
+                                <paper-input label="Sequence ID" type="number" value="" alwaysFloatLabel disabled value={{filewriter.sequence}}"></paper-input>
+                            </paper-material>
+                        </paper-material>
+                    </section>
+                    <section data-route="data">
+                        <paper-material elevation="1">
+                            data
+                        </paper-material>
+                    </section>
+
+
+                </iron-pages>
+            </paper-header-panel>
+        </paper-drawer-panel>
+
+
+    </template>
+</dom-module>
+<script>
+    (function () {
+        Polymer({
+            is: 'eiger-control',
+
+            properties: {
+                selectedPage: {
+                    type: String,
+                    value: 'filewriter',
+                    notify: true
+                },
+                connected: {
+                    type: Boolean,
+                    value: false,
+                    notify: true,
+                    observer: 'connectDisconnect'
+                },
+                filewriter: {
+                    type: Object,
+                    value: function() { return {
+                        mode: false,
+                        compression_enabled: false,
+                        name_pattern: '',
+                        nimages_per_file: 0,
+                        sequence: 0
+                    }; },
+                    notify: true
+                },
+                filewriter_update: {
+                    type: String,
+                    value: '',
+                    notify:true,
+                    observer: 'filewriterExternalUpdate'
+                },
+                filewriter_external: {
+                    type: Object,
+                    value: function() {return {}; },
+                    notify: true
+                },
+                detector: {
+                    type: Object,
+                    value: function() { return {
+                        count_time: 0.0,
+                        frame_time: 0.0,
+                        nimages: 0,
+                        photon_energy: 0.0,
+                        threshold_energy: 0.0,
+                        wavelength: 0.0,
+                        element: '',
+                        flatfield_correction_applied: false,
+                        number_of_excluded_pixels: 0,
+                        countrate_correction_applied: false,
+                        trigger_mode: 0
+                    }; },
+                    notify: true
+                },
+                detector_update: {
+                    type: String,
+                    value: '',
+                    notify:true,
+                    observer: 'detectorExternalUpdate'
+                },
+                detector_external: {
+                    type: Object,
+                    value: function() {return {}; },
+                    notify: true
+                },
+                return_message: {
+                    type: String,
+                    value: '',
+                    notify: true
+                }
+            },
+            observers: [
+                    'filewriterUpdate(filewriter.*)',
+                    'detectorUpdate(detector.*)'
+            ],
+            connectDisconnect: function(connected){
+                this.$.mainToolbar.toggleClass('disconnected', !connected);
+            },
+            filewriterUpdate: function(change) {
+                var self = this;
+                path = change.path.split('.')[1];
+                if (typeof(path) == 'undefined') {return}
+                if (self.filewriter_external[path] != change.value) {
+                    setTimeout(function () {
+                        self.filewriterUpdateDelay(path, change.value)
+                    }, 2000);
+                }
+            },
+            filewriterUpdateDelay: function(path, value){
+                if (this['filewriter'][path] == value) {
+                    this.fire('filewriter', {property: path, value: value})
+                }
+            },
+            filewriterExternalUpdate: function(change){
+                var self = this;
+                try {
+                    var changes = JSON.parse(change);
+                    console.log(changes);
+                    Object.keys(changes).forEach(function(key){
+                        self.filewriter_external[key] = changes[key];
+                        if (changes[key] != self.filewriter[key]) {
+                            self.set('filewriter.' + key, changes[key]);
+                        }
+                    });
+                }
+                catch (e){
+
+                }
+            },
+            detectorUpdate: function(change) {
+                var self = this;
+                path = change.path.split('.')[1];
+                if (typeof(path) == 'undefined') {return}
+                if (self.detector_external[path] != change.value) {
+                    setTimeout(function () {
+                        self.detectorUpdateDelay(path, change.value)
+                    }, 2000);
+                }
+            },
+            detectorUpdateDelay: function(path, value){
+                if (this['detector'][path] == value) {
+                    this.fire('detector', {property: path, value: value})
+                }
+            },
+            detectorExternalUpdate: function(change){
+                var self = this;
+                try {
+                    var changes = JSON.parse(change);
+                    console.log(changes);
+                    Object.keys(changes).forEach(function(key){
+                        self.detector_external[key] = changes[key];
+                        if (changes[key] != self.detector[key]) {
+                            self.set('detector.' + key, changes[key]);
+                        }
+                    });
+                }
+                catch (e){
+
+                }
+            },
+            ready: function () {
+                // Ensure the drawer is hidden on desktop/tablet
+                this.$.paperDrawerPanel.forceNarrow = true;
+            },
+            // Open page and close drawer after menu item is selected if drawerPanel is narrow
+            onMenuSelect: function (event) {
+                var drawerPanel = document.querySelector('#paperDrawerPanel');
+                if (drawerPanel.narrow) {
+                    drawerPanel.closeDrawer();
+                }
+            }
+        });
+    })();
+
+</script>

@@ -1,0 +1,54 @@
+In order to read LZ4 compressed HDF5 files, please compile first the filter plugin in the subdirectory ./HDF5Plugin!
+
+
+
+Examples how to read the data written by Dectris EIGER Detectors.
+
+The data is written in hdf5 files, using the NeXus standard, see www.nexusformat.org, www.hdfgroup.org.
+The files contain  two trees: data and header. In order to access both trees, the <*.master.h5> file has to opened. Header items are valid for a whole image series and can be found in /entry/instrument/detector . Images are saved as a stream in the data tree in the /entry/data_xxxxxx branch, each one containing a link to a data file. In order to access a specific image with image number <img_number>, one has to find first the corresponding link, open it and then read the hyperslab to which the image contains. See the example code how that is done. The LUT in all examples (python and C++) maps the image number to the corresponding link name and can be used to find a specific image in the data links.
+
+Requirements for the C++ sample code:
+hdf5 1.8.11
+The code was NOT tested with hdf 1.6 and will probably not run. In case you are using Centos 5.x, you can download a binary rpm with hdf5 1.8.12 from http://www.hdfgroup.org/ftp/HDF5/current/bin/RPMS/index.html
+
+
+Requirements for the python sample code:
+python 2.6
+hdf5 1.8
+numpy 
+
+h5py >2.0 (when using the h5py sample)
+OR
+pytables > 2.4.0 (when using the pytables example)
+
+if you want to use to plot an example image:
+matplotlib
+
+
+### INSTALLATION ###
+
+The C++ sample code can be compiled with:
+h5c++ -O3 -o FileReaderExample FileReaderExample.cpp
+or
+g++  -O3 -o FileReaderExample FileReaderExample.cpp -lhdf5
+
+
+The python example should run when above requirements are fullfilled.
+
+### USAGE ###
+C++
+./FileReaderExample <master file> [0/1]  ## 0 for 32bit data (PILATUS), 1 for 16bit data (EIGER)
+Python:
+./FileReaderExampleH5py.py <masterfile>          ## h5py example
+./FileReaderExamplePyTables.py <masterfile>      ## pytables example
+
+
+
+
+### REMARKS ###
+
+- Reading a header item in the NeXus format is straightforward HDF5. See DNexusReadHelper.h, or the pyhton scripts.
+
+- Reading an image is a little bit more involved. A EIGER detector writes the images into several data files, each containing a large number of images. These datafiles are linked from the master file. In order to find a image with image number n, one first creates a look-up table (LUT), mapping each image number to the link name pointing to the data file containing the image. See CreateLUT() in DNexusReadHelper.h, and ReadImage(), or the python scripts.
+
+

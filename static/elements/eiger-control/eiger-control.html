@@ -89,6 +89,7 @@
                                         <paper-input label="Count Time" alwaysFloatLabel type="number" value="{{detector.count_time}}"></paper-input>
                                         <paper-input label="Frame Time" alwaysFloatLabel type="number" value="{{detector.frame_time}}"></paper-input>
                                         <paper-input label="Number of Images" alwaysFloatLabel type="number" value="{{detector.nimages}}"></paper-input>
+                                        <paper-input label="Number of Triggers" alwaysFloatLabel type="number" value="{{detector.ntrigger}}"></paper-input>
                                         <paper-input label="Photon Energy" alwaysFloatLabel type="number" value="{{detector.photon_energy}}"></paper-input>
                                         <paper-input label="Wavelength" alwaysFloatLabel type="number" value="{{detector.wavelength}}"></paper-input>
                                     </div>
@@ -108,6 +109,12 @@
                                         </paper-radio-group>
                                     </div>
                                 </div>
+                            </paper-material>
+                            <paper-material elevation="2" class="vertical" style="width: 100px;">
+                                <H1>Acquire</H1>
+                                <paper-button raised on-tap="handleArm">Arm</paper-button>
+                                <paper-button raised on-tap="handleTrigger">Trigger</paper-button>
+                                <paper-button raised on-tap="handleDisarm">Disarm</paper-button>
                             </paper-material>
                             <paper-material elevation="2" class="vertical" style="width: 200px;">
                                 <H1>FileWriter</H1>
@@ -178,6 +185,7 @@
                         count_time: 0.0,
                         frame_time: 0.0,
                         nimages: 0,
+                        ntrigger: 0,
                         photon_energy: 0.0,
                         threshold_energy: 0.0,
                         wavelength: 0.0,
@@ -212,6 +220,18 @@
             ],
             connectDisconnect: function(connected){
                 this.$.mainToolbar.toggleClass('disconnected', !connected);
+            },
+            handleArm: function (){
+                console.log('arming...');
+                this.fire('arm') 
+            },
+            handleTrigger: function (){
+                console.log('triggering...');
+                this.fire('trigger') 
+            },
+            handleDisarm: function (){
+                console.log('disarm...');
+                this.fire('disarm') 
             },
             filewriterUpdate: function(change) {
                 var self = this;

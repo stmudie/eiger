@@ -44,8 +44,8 @@ except ImportError:
 ### Configure IP and PORT of the EIGER system that you are
 ### accessing with this code below.
 # fixed IP, direct connection
-IP = "62.12.129.162"
-PORT = "4011"
+IP = "10.114.11.111"
+PORT = "80"
 
 # for printing detector config and values
 LISTED_DETECTOR_PARAMS = [
@@ -238,7 +238,7 @@ class EigerTest(DEigerClient):
         return m
 
     def arm(self):
-        self.sendDetectorCommand(u'arm')
+        return self.sendDetectorCommand(u'arm')
 
     def trigger(self):
         self.sendDetectorCommand(u'trigger')

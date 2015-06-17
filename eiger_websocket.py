@@ -8,7 +8,7 @@ import json
 import logging
 logging.basicConfig()
 
-from eigerclient import DEigerClient
+from eigertest2 import EigerTest
 
 try:
     import asyncio
@@ -22,9 +22,9 @@ except ImportError:
 class EigerControlServerProtocol(WebSocketServerProtocol):
 
     def __init__(self):
-        IP = "62.12.129.162"
-        PORT = "4011"
-        self.eiger = DEigerClient(host=IP, port=PORT, verbose=True)
+        IP = "10.130.11.111"
+        PORT = "80"
+        self.eiger = EigerTest(host=IP, port=PORT, verbose=True)
 
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
@@ -45,6 +45,15 @@ class EigerControlServerProtocol(WebSocketServerProtocol):
         except AttributeError:
             pass
 
+    def on_arm(self, payload):
+        result = self.eiger.arm()
+
+    def on_trigger(self, payload):
+        result = self.eiger.trigger()
+
+    def on_disarm(self, payload):
+        result = self.eiger.disarm()
+
     def on_filewriter(self, payload):
         data = payload['data']
         if data['property'] == 'mode':
@@ -53,7 +62,16 @@ class EigerControlServerProtocol(WebSocketServerProtocol):
             if data['value'] is False:
                 data['value'] = 'disabled'
 
-        self.eiger.setFileWriterConfig(data['property'], data['value'])
+        try:
+            result = self.eiger.setFileWriterConfig(data['property'], data['value'])
+        except RuntimeError:
+            return
+
+        result_dict = {}
+        for param in result:
+            result_dict[param] = self.eiger.fileWriterConfig(param=param)['value']
+        
+        self.sendMessage(json.dumps({'type': 'update_filewriter', 'data': result_dict}))
 
     def on_detector(self, payload):
         data = payload['data']
@@ -65,7 +83,7 @@ class EigerControlServerProtocol(WebSocketServerProtocol):
         result_dict = {}
         for param in result:
             result_dict[param] = self.eiger.detectorConfig(param=param)['value']
-        self.sendMessage(json.dumps({'type': 'update', 'data': result_dict}))
+        self.sendMessage(json.dumps({'type': 'update_detector', 'data': result_dict}))
 
     def on_update_all(self, payload):
         # TODO Replace with self.eiger.detectorConfig() to get all with one call. Timing out with remote detector.
@@ -76,6 +94,7 @@ class EigerControlServerProtocol(WebSocketServerProtocol):
                        'element': '',
                        'threshold_energy': 0.0,
                        'nimages': 0,
+                       'ntrigger': 0,
                        'flatfield_correction_applied': False,
                        'number_of_excluded_pixels': 0,
                        'countrate_correction_applied': False}
@@ -116,7 +135,7 @@ if __name__ == '__main__':
     factory.protocol = EigerControlServerProtocol
 
     loop = asyncio.get_event_loop()
-    coro = loop.create_server(factory, '127.0.0.1', 9000)
+    coro = loop.create_server(factory, '0.0.0.0', 9000)
     server = loop.run_until_complete(coro)
 
     try:

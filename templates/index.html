@@ -14,7 +14,7 @@
 
 <body unresolved class="fullbleed layout vertical">
 <template is="dom-bind" id="app">
-    <eiger-control id="eiger" connected="{{"{{connected}}"}}" detector_update="{{"{{detector_update}}"}}" filewriter_update="{{"{{filewriter_update}}"}}" on-filewriter="handleFilewriter" on-detector="handleDetector"></eiger-control>
+    <eiger-control id="eiger" connected="{{"{{connected}}"}}" detector_update="{{"{{detector_update}}"}}" filewriter_update="{{"{{filewriter_update}}"}}" on-filewriter="handleFilewriter" on-detector="handleDetector" on-arm="handleArm" on-trigger="handleTrigger" on-disarm="handleDisarm"></eiger-control>
 </template>
 </body>
 
@@ -38,7 +38,15 @@
         app.handleDetector = function(event) {
             sendText(JSON.stringify({type: 'detector', data:event.detail}));
         };
-
+        app.handleArm = function(event) {
+            sendText(JSON.stringify({type: 'arm'}));
+        };
+        app.handleTrigger = function(event) {
+            sendText(JSON.stringify({type: 'trigger'}));
+        };
+        app.handleDisarm = function(event) {
+            sendText(JSON.stringify({type: 'disarm'}));
+        };
         window.addEventListener('WebComponentsReady', function () {
             document.querySelector('body').removeAttribute('unresolved');
         });
@@ -88,7 +96,7 @@
 
         function connect() {
             console.log("Trying to connect");
-            socket = new WebSocket("ws://127.0.0.1:9000");
+            socket = new WebSocket("ws://10.130.11.110:9000");
             socket.binaryType = "arraybuffer";
             socket.onopen = function () {
                 console.log("Connected!");
